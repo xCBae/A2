@@ -6,7 +6,6 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Color;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -18,11 +17,14 @@ import javax.swing.JTree;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import javax.swing.tree.DefaultTreeModel;
 import component.Tree;
 import component.UserComponentVisitor;
+import component.UserUpdateVisitor;
+import component.VisitorValidation;
 import user.UserGroup;
 import user.UserName;
+import java.awt.Color;
+import javax.swing.tree.DefaultTreeModel;
 
 public class AdminControlPanel extends JFrame {
 
@@ -33,8 +35,10 @@ public class AdminControlPanel extends JFrame {
 	private int userTotal = 0;
 	private JPanel panel;
 	private UserComponentVisitor findUserC = new UserComponentVisitor();
-	private UserGroup ROOTGroup = new UserGroup("ROOT");
-	private Tree ROOT = new Tree("ROOT", ROOTGroup);
+	private VisitorValidation valVis = new VisitorValidation();
+	private UserUpdateVisitor lastUpdate = new UserUpdateVisitor();
+	private UserGroup rootGroup = new UserGroup("ROOT");
+	private Tree root = new Tree("ROOT", rootGroup);
 	
     private AdminControlPanel(){ 
         makeGui();
@@ -55,11 +59,12 @@ public class AdminControlPanel extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 700, 600);
 		contentPane = new JPanel();
+		contentPane.setBackground(new Color(255, 255, 255));
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(new GridLayout(1, 0, 0, 0));
 		
-		//Split panel
+		//Split Panel
 		JSplitPane splitPane = new JSplitPane();
 		contentPane.add(splitPane);
 		
@@ -68,7 +73,7 @@ public class AdminControlPanel extends JFrame {
         tree_Panel.setBackground(new Color(0, 128, 192));
 		splitPane.setLeftComponent(tree_Panel);
 
-		//Right Panel
+		//Right panel
 		panel = new JPanel();
 		panel.setBackground(new Color(0, 128, 192));
 		splitPane.setRightComponent(panel);
@@ -83,17 +88,17 @@ public class AdminControlPanel extends JFrame {
 				}
 			}
 		));
-		tree.setBackground(new Color(240, 240, 240));
-		
-		//Set ROOT as default
 		DefaultMutableTreeNode firstLeaf = ((DefaultMutableTreeNode)tree.getModel().getRoot()).getFirstLeaf();
 		tree.setSelectionPath(new TreePath(firstLeaf.getPath()));
 		tree_Panel.add(tree);
 		
-		//Panels
+		//Panel to add user
 		addUserComponents();
+		//Open user control panel
 		userControlPanel();
+		//Total users/group panel
 		userComponentCount();
+		//Message Panel
 		messageCount();
 
         setVisible(true);
@@ -115,22 +120,21 @@ public class AdminControlPanel extends JFrame {
 		
 		//Button for adding user
 		JButton addUser_button = new JButton("Add User");
-		addUser_button.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		addUser_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				//Element that cursor selected in JTree
 				DefaultMutableTreeNode selectedElement 
    					=(DefaultMutableTreeNode)tree.getSelectionPath().getLastPathComponent();
-				UserGroup tempGroup = new UserGroup(selectedElement.toString()); //Local Group used to compare to Groups in tree	
-				UserName username = new UserName(userTxtField.getText()); //Create user object using the text field as the UID
-				Tree selectedGroup = ROOT.accept(findUserC,tempGroup);
+				UserGroup tempGroup = new UserGroup(selectedElement.toString());
+				UserName username = new UserName(userTxtField.getText());
+				Tree selectedGroup = root.accept(findUserC,tempGroup);
 				//Add user if selected directory is a group and the user does not exist already
 				if(selectedGroup != null && selectedGroup.getUserComponent() instanceof UserGroup){
-					if(ROOT.accept(findUserC,username) != null){
+					if(root.accept(findUserC,username) != null){
 						System.out.println("Error. User already exits.");
 						return;
 					}
-					ROOT.accept(findUserC,tempGroup).getChildren().add(new Tree(userTxtField.getText(),username));
+					root.accept(findUserC,tempGroup).getChildren().add(new Tree(userTxtField.getText(),username));
 					//Update UI
 					child = new DefaultMutableTreeNode(userTxtField.getText());
 					selectedElement.add(child);
@@ -147,7 +151,7 @@ public class AdminControlPanel extends JFrame {
         addUser_button.setPreferredSize(new Dimension(200, 25));
 		user_Panel.add(addUser_button);
 		
-		//Add group 
+		//Add group
 		JPanel group_Panel = new JPanel();
 		group_Panel.setBackground(new Color(0, 128, 192));
 		panel.add(group_Panel);
@@ -158,16 +162,15 @@ public class AdminControlPanel extends JFrame {
 		groupTxtField.setColumns(10);
 		
 		JButton addGroup_button = new JButton("Add Group");
-		addGroup_button.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		addGroup_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				DefaultMutableTreeNode selectedElement 
    					=(DefaultMutableTreeNode)tree.getSelectionPath().getLastPathComponent();
-				UserGroup tempGroup = new UserGroup(selectedElement.toString()); //Local Group used to compare to Groups in tree
-				UserGroup UserGroup = new UserGroup(groupTxtField.getText()); //Create userGroup object using the text field as the UID
-				Tree selectedGroup = ROOT.accept(findUserC,tempGroup);
+				UserGroup tempGroup = new UserGroup(selectedElement.toString());
+				UserGroup UserGroup = new UserGroup(groupTxtField.getText());
+				Tree selectedGroup = root.accept(findUserC,tempGroup);
 				if(selectedGroup != null && selectedGroup.getUserComponent() instanceof UserGroup ){
-					if(ROOT.accept(findUserC,UserGroup) != null){
+					if(root.accept(findUserC,UserGroup) != null){
 						System.out.println("Error. This group already exists.");
 						return;
 					}
@@ -195,18 +198,41 @@ public class AdminControlPanel extends JFrame {
 		userView_Panel.setLayout(new FlowLayout(FlowLayout.CENTER, 30, 20));
 		
 		JButton openUserView_button = new JButton("Open User View");
-		openUserView_button.setFont(new Font("Tahoma", Font.BOLD, 11));
 		openUserView_button.setPreferredSize(new Dimension(150, 25));
 		openUserView_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				DefaultMutableTreeNode selectedElement 
    				=(DefaultMutableTreeNode)tree.getSelectionPath().getLastPathComponent();
 				
-				Tree selectedNode = ROOT.accept(findUserC, new UserName(selectedElement.toString()));
-				UserPanel userPanel = new UserPanel((UserName)selectedNode.getUserComponent(), ROOT);
+				Tree selectedNode = root.accept(findUserC, new UserName(selectedElement.toString()));
+				UserPanel userPanel = new UserPanel((UserName)selectedNode.getUserComponent(), root);
 			}
 		});
 		userView_Panel.add(openUserView_button);
+
+		//Last updated user button
+		JButton lastUpdate_button = new JButton("Last Update User");
+		lastUpdate_button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("The last updated user is: "+root.accept(lastUpdate));
+			}
+		});
+		userView_Panel.add(lastUpdate_button);
+
+		//Validate username button
+		JButton validateButton = new JButton("Validate Names");
+		validateButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				boolean isValid = root.accept(valVis);
+				if(isValid == true){
+					System.out.println("Usernames are valid.");
+				}else{
+					System.out.println("Usernames are not valid.");
+				}
+			}
+		});
+		userView_Panel.add(validateButton);
+		validateButton.setPreferredSize(new Dimension(150, 25));
 	}
 
 	//Users and groups total
@@ -237,7 +263,6 @@ public class AdminControlPanel extends JFrame {
 
 		//User total
 		JButton userTotal_button = new JButton("Show User Total");
-		userTotal_button.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		userTotal_button.setPreferredSize(new Dimension(200, 25));
 		userTotal_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -249,7 +274,6 @@ public class AdminControlPanel extends JFrame {
 
 		//Group total
 		JButton groupTotal_button = new JButton("Show Group Total");
-		groupTotal_button.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		groupTotal_button.setPreferredSize(new Dimension(200, 25));
 		groupTotal_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -278,7 +302,7 @@ public class AdminControlPanel extends JFrame {
 		JButton messageTotal_button = new JButton("Show Messages Total");
 		messageTotal_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				int msgCount = ROOT.countMsg(ROOT)[0];
+				int msgCount = root.countMsg(root)[0];
 				msgTotal_label.setText("Total Messages: "+ msgCount);
 				msgTotal_label.updateUI();
 			}
@@ -292,11 +316,10 @@ public class AdminControlPanel extends JFrame {
 		message_Panel.add(posPercBtn_panel);
 		
 		JButton posPerc_button = new JButton("Show Positive Percentage");
-		posPerc_button.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		posPercBtn_panel.add(posPerc_button);
 		posPerc_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				float ratio = (float)(ROOT.countMsg(ROOT)[1])/ROOT.countMsg(ROOT)[0];
+				float ratio = (float)(root.countMsg(root)[1])/root.countMsg(root)[0];
 				ratio = (float)Math.round(ratio *10000)/100;
 				posPerc_label.setText("Positive ratio: "+Float.toString(ratio)+"%");
 				posPerc_label.updateUI();

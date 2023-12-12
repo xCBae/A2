@@ -5,8 +5,7 @@ import java.util.Queue;
 import user.UserComponent;
 
 public class UserComponentVisitor extends Visitor{
-  
-	//Search tree
+    
     public Tree visit(Tree root,UserComponent userC){
         if(root == null) return null;
         Queue<Tree> queue = new LinkedList<>();

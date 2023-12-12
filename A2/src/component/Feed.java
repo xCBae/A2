@@ -6,29 +6,36 @@ public class Feed implements Observer, Observable {
 
     private  ArrayList<String> messages;
     private ArrayList<Observer> observerList = new ArrayList<>();
+    private long lastUpdated;
 
     public Feed(){
         this.messages = new ArrayList<String>();
     }
 
-    //Add messages to newsfeed
+    //Add messages to feed
     @Override
     public void update(String tweet){
         messages.add(tweet);
         notifyFollowers("");
+        lastUpdated = System.currentTimeMillis();
+    }
+    
+    //Return the last update time of newsFeed
+    public long getLastUpdateTime(){
+        return lastUpdated;
     }
 
-    //Return the messages in user newsfeed
+    //Return the messages in user's feed
     public ArrayList<String> getMessages(){
         return messages;
     }
 
-    //Count tweets in user's newsfeeds
+    //Count messages in feed
     public int countMessages(){
         return messages.size();
     }
 
-   //Count positive tweets
+    //Count positive messages in feed
     public int countPositiveMessages(){
         int posMsg = 0;
         String[] positiveWords = {"good","great","excellent","fun"};

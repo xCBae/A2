@@ -15,13 +15,15 @@ import java.awt.GridLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.awt.event.ActionEvent;
-import java.awt.Color; 
+import java.sql.Date;
+import java.util.ArrayList;
+import java.text.SimpleDateFormat; 
 import component.Observer;
 import component.Tree;
 import component.UserComponentVisitor;
 import user.UserName;
+import java.awt.Color;
 
 public class UserPanel extends JFrame implements Observer{
     
@@ -34,11 +36,8 @@ public class UserPanel extends JFrame implements Observer{
 	private  JList following_JList;
 	private  JList newsFeed_Jlist;
 
-	/**
-	* @param  u  the userName object of the user panel
-	* @param  Tree the root node of the tree (root userGroup)
-	*/
     public UserPanel(UserName u, Tree tree){
+    	setBackground(new Color(0, 128, 192));
         user = u;
 		root = tree;
         makeGui();
@@ -53,13 +52,14 @@ public class UserPanel extends JFrame implements Observer{
     private void makeGui(){
         setTitle("User Panel: " + user.getUID());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setBounds(100, 100, 400, 500);
+		setBounds(100, 100, 500, 500);
 		contentPane = new JPanel();
 		contentPane.setBackground(new Color(0, 128, 192));
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
 		
+		timePanel();
 		followUser();
 		followingList();
 		tweetPanel();
@@ -79,7 +79,6 @@ public class UserPanel extends JFrame implements Observer{
 		follow_panel.add(userTxt_panel);
 		
 		userTxtField = new JTextField();
-		userTxtField.setHorizontalAlignment(SwingConstants.CENTER);
 		userTxt_panel.add(userTxtField);
 		userTxtField.setColumns(10);
 		
@@ -111,7 +110,6 @@ public class UserPanel extends JFrame implements Observer{
     private void followingList(){
         JPanel follower_panel;
 		follower_panel = new JPanel();
-		follower_panel.setBackground(new Color(240, 240, 240));
 		contentPane.add(follower_panel);
 		follower_panel.setLayout(new BoxLayout(follower_panel, BoxLayout.Y_AXIS));
 
@@ -122,7 +120,7 @@ public class UserPanel extends JFrame implements Observer{
 		ftitle_panel.setLayout(new BoxLayout(ftitle_panel, BoxLayout.X_AXIS));
 		
 		JLabel followingLabel = new JLabel("Following");
-		followingLabel.setFont(new Font("Tahoma", Font.BOLD, 13));
+		followingLabel.setFont(new Font("Arial", Font.BOLD, 13));
 		ftitle_panel.add(followingLabel);
 		
 		JPanel flist_panel;
@@ -130,7 +128,7 @@ public class UserPanel extends JFrame implements Observer{
 		follower_panel.add(flist_panel);
 		flist_panel.setLayout(new GridLayout(0, 1, 0, 0));
 		
-		//Add JList to scrollpane
+		//Add JList to scroll panel
 		JScrollPane scrollPane = new JScrollPane();
 		flist_panel.add(scrollPane);
 		following_JList = new JList();
@@ -176,7 +174,6 @@ public class UserPanel extends JFrame implements Observer{
 	//Set the UI to showcase the newsfeed of the user
     private void newsFeed(){
         JPanel newsFeed_panel = new JPanel();
-        newsFeed_panel.setBackground(new Color(240, 240, 240));
 		contentPane.add(newsFeed_panel);
 		newsFeed_panel.setLayout(new BoxLayout(newsFeed_panel, BoxLayout.Y_AXIS));
 		
@@ -186,8 +183,7 @@ public class UserPanel extends JFrame implements Observer{
 		nfTitle_panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
 		
 		JLabel newsFeedLbl = new JLabel("Feed");
-		newsFeedLbl.setHorizontalAlignment(SwingConstants.CENTER);
-		newsFeedLbl.setFont(new Font("Tahoma", Font.BOLD, 13));
+		newsFeedLbl.setFont(new Font("Arial", Font.BOLD, 13));
 		nfTitle_panel.add(newsFeedLbl);
 		
 		JPanel nfList_panel = new JPanel();
@@ -200,7 +196,6 @@ public class UserPanel extends JFrame implements Observer{
 		newsFeed_Jlist = new JList();
 		scrollPane_1.setViewportView(newsFeed_Jlist);
 		newsFeed_Jlist.setFont(new Font("Arial", Font.PLAIN, 12));
-		
 		//Reverse the newsFeed so that most recent messages are shown on top
 		ArrayList<String> userNewsFeed = getUser().getNewsFeed().getMessages();
 		getUser().getNewsFeed().attach(this);
@@ -211,6 +206,27 @@ public class UserPanel extends JFrame implements Observer{
 		newsFeed_Jlist.setListData(revArrayList.toArray());
     }
 
+	//Time
+	private void timePanel(){
+		JPanel updatePanel = new JPanel();
+		contentPane.add(updatePanel);
+		updatePanel.setLayout(new GridLayout(1, 0, 0, 0));
+		//Time format
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM dd yyyy HH:mm:ss");    
+		Date resultdate = new Date(user.getCreationTime());
+		
+		//Most recent update time
+		JPanel lastUpdate_panel = new JPanel();
+		lastUpdate_panel.setBackground(new Color(0, 128, 192));
+		updatePanel.add(lastUpdate_panel);
+		
+		JLabel lastUpdate_label = new JLabel("");
+		lastUpdate_label.setBackground(new Color(255, 255, 255));
+		lastUpdate_label.setFont(new Font("Tahoma", Font.BOLD, 11));
+		Date updateTime = new Date(user.getLastUpdateTime());
+		lastUpdate_label.setText(sdf.format(updateTime));
+		lastUpdate_panel.add(lastUpdate_label);
+	}
 
 	//Update the user UI tweets when changes are made in news feed
 	@Override

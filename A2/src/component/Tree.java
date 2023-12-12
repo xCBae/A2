@@ -26,7 +26,7 @@ public class Tree extends Visitable {
         return this.children;
     }
 
-    //Count total messages in all newsfeed
+    //Count the total number of messages sent from all users in index 0 and 
     public int[] countMsg(Tree root){
         int msgCount = 0;
         int posMsg = 0;
@@ -53,7 +53,7 @@ public class Tree extends Visitable {
         return c;
     }
 
-    //Return user component
+    //Return the user component associated with the node
     public UserComponent getUserComponent(){
         return userC;
     }
@@ -61,6 +61,14 @@ public class Tree extends Visitable {
     //Accept visitors
     public Tree accept(Visitor visitor, UserComponent userComp){
         return visitor.visit(this, userComp);
+    }
+
+    public boolean accept(VisitorValidation visitor){
+        return visitor.visit(this);
+    }
+
+    public String accept(UserUpdateVisitor visitor){
+        return visitor.visit(this);
     }
 
 	@Override
